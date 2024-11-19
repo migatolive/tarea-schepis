@@ -1,25 +1,26 @@
 <?php
 session_start();
+include 'db.php';
 
-$users = [
-    ['email' => 'admin@example.com', 'password' => 'adminpass', 'role' => 'administrador'],
-    ['email' => 'cliente@example.com', 'password' => 'clientepass', 'role' => 'cliente']
-];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
-$email = $_POST['email'];
-$password = $_POST['password'];
+    $sql = "SELECT * FROM users WHERE email = :email";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([':email' => $email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-foreach ($users as $user) {
-    if ($user['email'] === $email && $user['password'] === $password) {
-        $_SESSION['role'] = $user['role'];
-        if ($user['role'] === 'administrador') {
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['role'] = $user['user_type'];
+        if ($user['user_type'] === 'administrador') {
             header('Location: admin.php');
         } else {
             header('Location: cliente.php');
         }
         exit();
+    } else {
+        echo "Usuario o contraseña incorrectos.";
     }
 }
-
-echo "Usuario o contraseña incorrectos.";
 ?>
